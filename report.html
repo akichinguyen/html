@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script src="http://www.amcharts.com/lib/3/amcharts.js" charset="utf-8"></script>
+<script src="http://www.amcharts.com/lib/3/serial.js" charset="utf-8"></script>
+<script src="http://www.amcharts.com/lib/3/xy.js" charset="utf-8"></script>
+<script src="js/d3.min.js"></script>
+<script src="js/index.js"></script>
+
+<script>
+  var toggle_show = function(obj_id) {
+    var trg = document.getElementById(obj_id);
+    if (trg.style.display === 'block' || trg.style.display === '')
+      trg.style.display = 'none';
+    else
+      trg.style.display = 'block';
+  }
+
+  var toggle_show2 = function(caller, obj_id) {
+    var trg = document.getElementById(obj_id);
+    if (trg.style.display === 'block' || trg.style.display === '') {
+      trg.style.display = 'none';
+      trg.style.padding = '0px';
+      caller.innerHTML= '&#x25bc;';
+    } else {
+      trg.style.display = '';
+      trg.style.padding = '7px';
+      caller.innerHTML= '&#x25b2;';
+    }
+  }
+
+  var show_or_hide = function(caller_id, obj_id, flag) { 
+    var trg = document.getElementById(obj_id);
+    if (flag) { 
+      trg.style.display = 'none';  
+      trg.style.padding = '0px';   
+      document.getElementById(caller_id).innerHTML= '&#x25bc;';   
+    } else {    
+      trg.style.display = '';      
+      trg.style.padding = '7px';   
+      document.getElementById(caller_id).innerHTML= '&#x25b2;';   
+    }
+  }
+</script>
+
+<style>
+pre {
+    font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+    font-size: 1.1em;
+}
+
+.cells_table {
+    font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.cells td, .dataset_table th,
+.merge td {
+    font-size: 1em;
+    #border: 1px solid #98bf21;
+    padding: 4px 7px 4px 7px;
+}
+
+.cells th,
+.merge th {
+    font-size: 1.1em;
+    text-align: center;
+    padding: 4px;
+    background-color: #A7C942;
+    color: #ffffff;
+}
+
+/*
+.cells tr.alt td {
+    color: #000000;
+    background-color: #EAF2D3;
+}
+*/
+
+.merge tr:nth-child(4n+3),
+.merge tr:nth-child(4n),
+.cells tr:nth-child(odd) {
+    color: #000000;
+    background-color: #EAF2D3;
+}
+.merge tr:nth-child(4n+1),
+.merge tr:nth-child(4n+2),
+.cells tr:nth-child(even) {
+    #color: #f8fbf1;
+    background-color: #f8fbf1;
+}
+
+.node circle {
+  fill: #fff;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+.node {
+ font: 15px sans-serif;
+}
+
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+
+.node--source {
+  fill: #2ca02c;
+}
+
+.node--target {
+  fill: #d62728;
+}
+
+.link--source,
+.link--target {
+  stroke-opacity: 1;
+  stroke-width: 2px;
+}
+
+.link--source {
+  stroke: #d62728;
+}
+
+.link--target {
+  stroke: #2ca02c;
+}
+
+/* Histogram */
+.bar rect {
+  fill: steelblue; 
+  shape-rendering: crispEdges;
+}
+
+.bar text {
+  font: 10px sans-serif;
+  fill: #fff;
+}
+
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+</style>
+</head>
+<body>
+<h1>KAMO.MULTI_MERGE report</h1>
+<div align="right">
+workdir: /home/tnguyen1/data_test/merge_190626-171538<br />
+created on 2019-06-26 17:15:38
+</div>
+<hr>
+
+<h2>Parameters</h2>
+<a href="#" onClick="toggle_show('div-params'); return false;">Show/Hide</a>
+<div id="div-params" style="display:none;">
+<pre>
+ lstin = "/home/tnguyen1/data_test/test.dat"
+ workdir = "merge_190626-171538"
+ anomalous = None
+ d_min = None
+ d_max = None
+ clustering = *no blend cc
+ program = *xscale aimless
+ reject_method = delta_cc1/2 *framecc *lpstats
+ reference_file = None
+ space_group = None
+ add_test_flag = False
+ nproc = 1
+ xscale {
+   min_i_over_sigma = 3
+   reference = bmax bmed *bmin
+   frames_per_batch = None
+   degrees_per_batch = None
+   corrections = *MODPIX *ABSORP *DECAY
+   use_tmpdir_if_available = True
+ }
+ rejection {
+   framecc {
+     method = abs *tukey
+     iqr_coeff = 1.5
+     abs_cutoff = 0.9
+   }
+   lpstats {
+     stats = *em.b em.ab pairwise_cc bfactor rfactor
+     iqr_coeff = 1.5
+     pwcc {
+       method = *abs tukey
+       iqr_coeff = 1.5
+       abs_cutoff = 0.8
+     }
+   }
+   delta_cchalf {
+     bin = *total outer total-then-outer
+   }
+ }
+ max_clusters = None
+ blend {
+   use_old_result = None
+   min_cmpl = 90
+   min_acmpl = None
+   min_redun = 2
+   min_aredun = None
+   max_LCV = None
+   max_aLCV = None
+ }
+ cc_clustering {
+   d_min = None
+   b_scale = False
+   use_normalized = False
+   method = single complete average weighted centroid median *ward
+   cc_to_distance = "sqrt(1-cc)"
+   min_common_refs = 3
+   min_ios = None
+   min_cmpl = 90
+   min_acmpl = None
+   min_redun = 2
+   min_aredun = None
+   max_clheight = None
+   nproc = 1
+ }
+ reference {
+   data = None
+   copy_test_flag = True
+ }
+ resolution {
+   estimate = True
+   cc_one_half_min = 0.5
+ }
+ batch {
+   par_run = *deltacchalf merging
+   engine = sge *sh
+   sge_pe_name = "par"
+   nproc_each = 4
+   sh_max_jobs = 1
+ }
+
+</pre>
+</div>
+
+<h2>Input files</h2>
+88 files for merging in P 4/m m m symmetry
+
+<h3>Unit cell histogram</h3>
+<table>
+<tr><th>a</th><th>c</th></tr>
+<tr>
+
+<td>
+<div id="chartdiv_cell0" style="width: 500px; height: 400px;"></div>
+<script>
+ var chart_cell0 = AmCharts.makeChart("chartdiv_cell0", {
+    "type": "serial",
+    "theme": "none",  
+    "legend": {
+        "useGraphSettings": true,
+        "markerSize":12,
+        "valueWidth":0,
+        "verticalGap":0
+    },
+    "dataProvider": [{"xval":78.66,"yval":1},{"xval":78.73,"yval":1},{"xval":78.81,"yval":9},{"xval":78.88,"yval":10},{"xval":78.96,"yval":6},{"xval":79.03,"yval":3},{"xval":79.11,"yval":6},{"xval":79.18,"yval":3},{"xval":79.26,"yval":1},{"xval":79.33,"yval":1},{"xval":79.41,"yval":0},{"xval":79.48,"yval":3},{"xval":79.56,"yval":1},{"xval":79.63,"yval":1},{"xval":79.71,"yval":5},{"xval":79.78,"yval":4},{"xval":79.86,"yval":3},{"xval":79.93,"yval":4},{"xval":80.01,"yval":6},{"xval":80.08,"yval":7},{"xval":80.16,"yval":5},{"xval":80.23,"yval":4},{"xval":80.30,"yval":1},{"xval":80.38,"yval":1},{"xval":80.45,"yval":0},{"xval":80.53,"yval":1},{"xval":80.60,"yval":0},{"xval":80.68,"yval":0},{"xval":80.75,"yval":0},{"xval":80.83,"yval":1}],
+    "valueAxes": [{
+        "minorGridAlpha": 0.08,
+        "minorGridEnabled": true,
+        "position": "top",
+        "axisAlpha":0
+    }],
+    "graphs": [{
+        "balloonText": "[[category]]: [[value]]",
+        "title": "a",
+        "type": "column",
+        "fillAlphas": 0.8,
+        "valueField": "yval"
+    }],
+    "rotate": false,
+    "categoryField": "xval",
+    "categoryAxis": {
+        "gridPosition": "start",
+        "title": ""
+    }
+});
+</script>
+</td>
+
+<td>
+<div id="chartdiv_cell2" style="width: 500px; height: 400px;"></div>
+<script>
+ var chart_cell2 = AmCharts.makeChart("chartdiv_cell2", {
+    "type": "serial",
+    "theme": "none",  
+    "legend": {
+        "useGraphSettings": true,
+        "markerSize":12,
+        "valueWidth":0,
+        "verticalGap":0
+    },
+    "dataProvider": [{"xval":36.83,"yval":4},{"xval":36.91,"yval":12},{"xval":36.98,"yval":10},{"xval":37.05,"yval":13},{"xval":37.13,"yval":6},{"xval":37.20,"yval":4},{"xval":37.28,"yval":0},{"xval":37.35,"yval":0},{"xval":37.42,"yval":0},{"xval":37.50,"yval":0},{"xval":37.57,"yval":0},{"xval":37.64,"yval":0},{"xval":37.72,"yval":6},{"xval":37.79,"yval":16},{"xval":37.87,"yval":9},{"xval":37.94,"yval":4},{"xval":38.01,"yval":0},{"xval":38.09,"yval":2},{"xval":38.16,"yval":0},{"xval":38.23,"yval":0},{"xval":38.31,"yval":0},{"xval":38.38,"yval":0},{"xval":38.46,"yval":0},{"xval":38.53,"yval":0},{"xval":38.60,"yval":1},{"xval":38.68,"yval":0},{"xval":38.75,"yval":0},{"xval":38.82,"yval":0},{"xval":38.90,"yval":0},{"xval":38.97,"yval":1}],
+    "valueAxes": [{
+        "minorGridAlpha": 0.08,
+        "minorGridEnabled": true,
+        "position": "top",
+        "axisAlpha":0
+    }],
+    "graphs": [{
+        "balloonText": "[[category]]: [[value]]",
+        "title": "c",
+        "type": "column",
+        "fillAlphas": 0.8,
+        "valueField": "yval"
+    }],
+    "rotate": false,
+    "categoryField": "xval",
+    "categoryAxis": {
+        "gridPosition": "start",
+        "title": ""
+    }
+});
+</script>
+</td>
+</tr><tr></tr><tr></tr>
+</table>
+
+<h3>Files</h3>
+<a href="#" onClick="toggle_show('div-input-files'); return false;">Show/Hide</a>
+<div id="div-input-files" style="display:none;">
+<table class="cells">
+<tr>
+ <th>idx</th> <th>file</th> <th>a</th> <th>b</th> <th>c</th> <th>&alpha;</th> <th>&beta;</th> <th>&gamma;</th>
+</tr>
+<tr>
+ <td>0001</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_57/XtalSamp_6_2_C44_3-100/XDS_ASCII.HKL_noscale</td><td>78.82</td><td>78.82</td><td>37.80</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0002</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_63/XtalSamp_6_2_C50_3-100/XDS_ASCII.HKL_noscale</td><td>78.87</td><td>78.87</td><td>37.78</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0003</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_151/XtalSamp_6_2_C28_3-100/XDS_ASCII.HKL_noscale</td><td>79.04</td><td>79.04</td><td>37.05</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0004</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_41/XtalSamp_6_2_C28_3-100/XDS_ASCII.HKL_noscale</td><td>79.08</td><td>79.08</td><td>37.70</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0005</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_122/XtalSamp_6_2_C44_3-100/XDS_ASCII.HKL_noscale</td><td>79.75</td><td>79.75</td><td>36.92</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0006</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_102/XtalSamp_6_2_C24_3-100/XDS_ASCII.HKL_noscale</td><td>80.26</td><td>80.26</td><td>36.86</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0007</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_92/XtalSamp_6_2_C14_3-100/XDS_ASCII.HKL_noscale</td><td>80.13</td><td>80.13</td><td>37.06</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0008</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_148/XtalSamp_6_2_C25_3-100/XDS_ASCII.HKL_noscale</td><td>80.32</td><td>80.32</td><td>37.08</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0009</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_135/XtalSamp_6_2_C12_3-100/XDS_ASCII.HKL_noscale</td><td>79.92</td><td>79.92</td><td>37.14</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0010</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_143/XtalSamp_6_2_C20_3-100/XDS_ASCII.HKL_noscale</td><td>79.45</td><td>79.45</td><td>37.13</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0011</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_35/XtalSamp_6_2_C22_3-100/XDS_ASCII.HKL_noscale</td><td>78.85</td><td>78.85</td><td>37.87</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0012</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_87/XtalSamp_6_2_C9_3-100/XDS_ASCII.HKL_noscale</td><td>79.69</td><td>79.69</td><td>37.17</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0013</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_121/XtalSamp_6_2_C43_3-100/XDS_ASCII.HKL_noscale</td><td>79.97</td><td>79.97</td><td>36.80</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0014</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_71/XtalSamp_6_2_C58_3-100/XDS_ASCII.HKL_noscale</td><td>78.81</td><td>78.81</td><td>37.85</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0015</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_89/XtalSamp_6_2_C11_3-100/XDS_ASCII.HKL_noscale</td><td>79.88</td><td>79.88</td><td>36.95</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0016</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_116/XtalSamp_6_2_C38_3-100/XDS_ASCII.HKL_noscale</td><td>80.37</td><td>80.37</td><td>36.89</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0017</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_33/XtalSamp_6_2_C20_3-100/XDS_ASCII.HKL_noscale</td><td>78.88</td><td>78.88</td><td>37.84</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0018</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_46/XtalSamp_6_2_C33_3-100/XDS_ASCII.HKL_noscale</td><td>78.99</td><td>78.99</td><td>37.69</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0019</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_66/XtalSamp_6_2_C53_3-100/XDS_ASCII.HKL_noscale</td><td>78.79</td><td>78.79</td><td>37.82</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0020</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_42/XtalSamp_6_2_C29_3-100/XDS_ASCII.HKL_noscale</td><td>79.25</td><td>79.25</td><td>37.72</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0021</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_115/XtalSamp_6_2_C37_3-100/XDS_ASCII.HKL_noscale</td><td>80.13</td><td>80.13</td><td>36.92</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0022</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_132/XtalSamp_6_2_C9_3-100/XDS_ASCII.HKL_noscale</td><td>79.60</td><td>79.60</td><td>37.01</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0023</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_125/XtalSamp_6_2_C2_3-100/XDS_ASCII.HKL_noscale</td><td>80.51</td><td>80.51</td><td>37.03</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0024</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_134/XtalSamp_6_2_C11_3-100/XDS_ASCII.HKL_noscale</td><td>80.15</td><td>80.15</td><td>37.04</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0025</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_62/XtalSamp_6_2_C49_3-100/XDS_ASCII.HKL_noscale</td><td>78.83</td><td>78.83</td><td>37.82</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0026</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_96/XtalSamp_6_2_C18_3-100/XDS_ASCII.HKL_noscale</td><td>79.48</td><td>79.48</td><td>37.12</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0027</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_129/XtalSamp_6_2_C6_3-100/XDS_ASCII.HKL_noscale</td><td>79.85</td><td>79.85</td><td>37.06</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0028</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_21/XtalSamp_6_2_C8_3-100/XDS_ASCII.HKL_noscale</td><td>78.86</td><td>78.86</td><td>37.85</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0029</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_45/XtalSamp_6_2_C32_3-100/XDS_ASCII.HKL_noscale</td><td>78.98</td><td>78.98</td><td>37.80</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0030</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_27/XtalSamp_6_2_C14_3-100/XDS_ASCII.HKL_noscale</td><td>78.78</td><td>78.78</td><td>37.81</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0031</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_70/XtalSamp_6_2_C57_3-100/XDS_ASCII.HKL_noscale</td><td>78.85</td><td>78.85</td><td>37.76</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0032</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_84/XtalSamp_6_2_C6_3-100/XDS_ASCII.HKL_noscale</td><td>79.98</td><td>79.98</td><td>36.94</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0033</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_16/XtalSamp_6_2_C3_3-100/XDS_ASCII.HKL_noscale</td><td>79.09</td><td>79.09</td><td>37.92</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0034</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_44/XtalSamp_6_2_C31_3-100/XDS_ASCII.HKL_noscale</td><td>78.78</td><td>78.78</td><td>37.85</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0035</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_40/XtalSamp_6_2_C27_3-100/XDS_ASCII.HKL_noscale</td><td>78.62</td><td>78.62</td><td>37.92</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0036</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_97/XtalSamp_6_2_C19_3-100/XDS_ASCII.HKL_noscale</td><td>80.25</td><td>80.25</td><td>36.80</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0037</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_111/XtalSamp_6_2_C33_3-100/XDS_ASCII.HKL_noscale</td><td>80.20</td><td>80.20</td><td>37.12</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0038</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_36/XtalSamp_6_2_C23_3-100/XDS_ASCII.HKL_noscale</td><td>78.87</td><td>78.87</td><td>37.84</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0039</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_149/XtalSamp_6_2_C26_3-100/XDS_ASCII.HKL_noscale</td><td>79.52</td><td>79.52</td><td>37.08</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0040</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_124/XtalSamp_6_2_C1_3-100/XDS_ASCII.HKL_noscale</td><td>80.05</td><td>80.05</td><td>36.90</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0041</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_54/XtalSamp_6_2_C41_3-100/XDS_ASCII.HKL_noscale</td><td>78.94</td><td>78.94</td><td>37.80</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0042</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_128/XtalSamp_6_2_C5_3-100/XDS_ASCII.HKL_noscale</td><td>80.10</td><td>80.10</td><td>37.06</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0043</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_117/XtalSamp_6_2_C39_3-100/XDS_ASCII.HKL_noscale</td><td>79.89</td><td>79.89</td><td>37.19</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0044</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_32/XtalSamp_6_2_C19_3-100/XDS_ASCII.HKL_noscale</td><td>78.86</td><td>78.86</td><td>37.77</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0045</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_86/XtalSamp_6_2_C8_3-100/XDS_ASCII.HKL_noscale</td><td>80.05</td><td>80.05</td><td>37.13</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0046</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_47/XtalSamp_6_2_C34_3-100/XDS_ASCII.HKL_noscale</td><td>78.98</td><td>78.98</td><td>37.83</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0047</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_64/XtalSamp_6_2_C51_3-100/XDS_ASCII.HKL_noscale</td><td>79.13</td><td>79.13</td><td>37.78</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0048</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_95/XtalSamp_6_2_C17_3-100/XDS_ASCII.HKL_noscale</td><td>80.01</td><td>80.01</td><td>37.00</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0049</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_119/XtalSamp_6_2_C41_3-100/XDS_ASCII.HKL_noscale</td><td>80.24</td><td>80.24</td><td>36.95</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0050</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_50/XtalSamp_6_2_C37_3-100/XDS_ASCII.HKL_noscale</td><td>79.07</td><td>79.07</td><td>37.74</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0051</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_127/XtalSamp_6_2_C4_3-100/XDS_ASCII.HKL_noscale</td><td>80.16</td><td>80.16</td><td>37.09</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0052</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_99/XtalSamp_6_2_C21_3-100/XDS_ASCII.HKL_noscale</td><td>79.72</td><td>79.72</td><td>37.23</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0053</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_133/XtalSamp_6_2_C10_3-100/XDS_ASCII.HKL_noscale</td><td>80.07</td><td>80.07</td><td>37.06</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0054</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_91/XtalSamp_6_2_C13_3-100/XDS_ASCII.HKL_noscale</td><td>79.80</td><td>79.80</td><td>37.04</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0055</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_34/XtalSamp_6_2_C21_3-100/XDS_ASCII.HKL_noscale</td><td>78.70</td><td>78.70</td><td>37.94</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0056</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_136/XtalSamp_6_2_C13_3-100/XDS_ASCII.HKL_noscale</td><td>80.87</td><td>80.87</td><td>36.89</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0057</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_80/XtalSamp_6_2_C2_3-100/XDS_ASCII.HKL_noscale</td><td>79.32</td><td>79.32</td><td>36.92</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0058</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_112/XtalSamp_6_2_C34_3-100/XDS_ASCII.HKL_noscale</td><td>80.09</td><td>80.09</td><td>36.82</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0059</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_108/XtalSamp_6_2_C30_3-100/XDS_ASCII.HKL_noscale</td><td>79.74</td><td>79.74</td><td>37.00</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0060</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_56/XtalSamp_6_2_C43_3-100/XDS_ASCII.HKL_noscale</td><td>78.97</td><td>78.97</td><td>37.84</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0061</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_20/XtalSamp_6_2_C7_3-100/XDS_ASCII.HKL_noscale</td><td>79.08</td><td>79.08</td><td>37.78</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0062</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_76/XtalSamp_6_2_C63_3-100/XDS_ASCII.HKL_noscale</td><td>78.89</td><td>78.89</td><td>37.83</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0063</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_147/XtalSamp_6_2_C24_3-100/XDS_ASCII.HKL_noscale</td><td>79.75</td><td>79.75</td><td>36.91</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0064</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_118/XtalSamp_6_2_C40_3-100/XDS_ASCII.HKL_noscale</td><td>80.04</td><td>80.04</td><td>37.05</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0065</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_53/XtalSamp_6_2_C40_3-100/XDS_ASCII.HKL_noscale</td><td>78.89</td><td>78.89</td><td>37.69</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0066</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_69/XtalSamp_6_2_C56_3-100/XDS_ASCII.HKL_noscale</td><td>79.18</td><td>79.18</td><td>38.12</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0067</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_55/XtalSamp_6_2_C42_3-100/XDS_ASCII.HKL_noscale</td><td>79.55</td><td>79.55</td><td>39.01</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0068</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_141/XtalSamp_6_2_C18_3-100/XDS_ASCII.HKL_noscale</td><td>79.75</td><td>79.75</td><td>36.95</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0069</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_48/XtalSamp_6_2_C35_3-100/XDS_ASCII.HKL_noscale</td><td>79.19</td><td>79.19</td><td>38.58</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0070</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_90/XtalSamp_6_2_C12_3-100/XDS_ASCII.HKL_noscale</td><td>79.71</td><td>79.71</td><td>36.97</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0071</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_65/XtalSamp_6_2_C52_3-100/XDS_ASCII.HKL_noscale</td><td>78.82</td><td>78.82</td><td>37.91</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0072</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_142/XtalSamp_6_2_C19_3-100/XDS_ASCII.HKL_noscale</td><td>80.05</td><td>80.05</td><td>37.02</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0073</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_73/XtalSamp_6_2_C60_3-100/XDS_ASCII.HKL_noscale</td><td>78.78</td><td>78.78</td><td>37.80</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0074</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_126/XtalSamp_6_2_C3_3-100/XDS_ASCII.HKL_noscale</td><td>80.07</td><td>80.07</td><td>36.99</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0075</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_79/XtalSamp_6_2_C1_3-100/XDS_ASCII.HKL_noscale</td><td>79.14</td><td>79.14</td><td>36.89</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0076</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_77/XtalSamp_6_2_C64_3-100/XDS_ASCII.HKL_noscale</td><td>79.00</td><td>79.00</td><td>38.11</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0077</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_110/XtalSamp_6_2_C32_3-100/XDS_ASCII.HKL_noscale</td><td>80.14</td><td>80.14</td><td>36.92</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0078</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_85/XtalSamp_6_2_C7_3-100/XDS_ASCII.HKL_noscale</td><td>80.03</td><td>80.03</td><td>37.11</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0079</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_120/XtalSamp_6_2_C42_3-100/XDS_ASCII.HKL_noscale</td><td>80.02</td><td>80.02</td><td>36.99</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0080</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_74/XtalSamp_6_2_C61_3-100/XDS_ASCII.HKL_noscale</td><td>78.97</td><td>78.97</td><td>37.88</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0081</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_88/XtalSamp_6_2_C10_3-100/XDS_ASCII.HKL_noscale</td><td>79.94</td><td>79.94</td><td>36.94</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0082</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_58/XtalSamp_6_2_C45_3-100/XDS_ASCII.HKL_noscale</td><td>78.82</td><td>78.82</td><td>37.77</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0083</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_17/XtalSamp_6_2_C4_3-100/XDS_ASCII.HKL_noscale</td><td>79.06</td><td>79.06</td><td>37.78</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0084</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_29/XtalSamp_6_2_C16_3-100/XDS_ASCII.HKL_noscale</td><td>78.87</td><td>78.87</td><td>37.87</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0085</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_75/XtalSamp_6_2_C62_3-100/XDS_ASCII.HKL_noscale</td><td>79.20</td><td>79.20</td><td>37.73</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0086</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_100/XtalSamp_6_2_C22_3-100/XDS_ASCII.HKL_noscale</td><td>79.94</td><td>79.94</td><td>36.93</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0087</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_94/XtalSamp_6_2_C16_3-100/XDS_ASCII.HKL_noscale</td><td>79.72</td><td>79.72</td><td>37.23</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+<tr>
+ <td>0088</td><td>/GPFS/CENTRAL/XF17ID1/yamada/work/kamotest/multi_lyso_AMX/20161105-2/_kamoproc/XtalSamp_6_2_93/XtalSamp_6_2_C15_3-100/XDS_ASCII.HKL_noscale</td><td>79.91</td><td>79.91</td><td>37.06</td><td>90.00</td><td>90.00</td><td>90.00</td>
+</tr>
+
+</table>
+</div>
+
+<h2>Merging summary</h2>
+
+<table class="merge">
+ <tr>
+  <th rowspan="2" colspan="2">cluster</th><th rowspan="2" title="Cluster height">ClH</th><th rowspan="2" title="Linear Cell Variation defined in BLEND">LCV</th><th rowspan="2" title="absolute Linear Cell Variation defined in BLEND">aLCV</th><th rowspan="2" title="Number of all datasets in the cluster">#DS<br />all</th><th rowspan="2" title="Number of actually merged datasets in the cluster">#DS<br />used</th>
+  <th colspan="5">Overall</th>
+  <th colspan="5">Outer shell</th>
+  <th colspan="7">Inner shell</th>
+  <th rowspan="2" title="ML estimate of isotropic Wilson B-factor by phenix.xtriage"><i>B</i><sub>Wilson</sub></th>
+  <th colspan="2" title="Anisotropic resolution cutoffs (based on CC1/2=0.5) for best and worst directions">Aniso resol</th>
+  <th rowspan="2" title="Resolution estimate based on CC1/2"><i>d</i><sub>min</sub><br>est.</th>
+ </tr>
+ <tr>
+  <th>Cmpl</th><th>Redun</th><th>I/&sigma;(I)</th><th><i>R</i><sub>meas</sub></th><th>CC<sub>1/2</sub></th>
+  <th>Cmpl</th><th>Redun</th><th>I/&sigma;(I)</th><th><i>R</i><sub>meas</sub></th><th>CC<sub>1/2</sub></th>
+  <th>Cmpl</th><th>Redun</th><th>I/&sigma;(I)</th><th><i>R</i><sub>meas</sub></th><th>CC<sub>1/2</sub></th><th>SigAno</th><th>CC<sub>ano</sub></th>
+  <th>best</th><th>wrst</th>
+ </tr>
+  <tr><td onClick="toggle_show2(this, 'merge-td-0');" id="merge-td-mark-0"">&#x25bc;</td><td>all_data</td><td>0.00</td><td>2.9</td><td>3.2</td><td>88</td><td>76</td><td>86.7</td><td>9.2</td><td>2.54</td><td>94.7</td><td>25.3</td><td>11.7</td><td>1.1</td><td>0.08</td><td>359.6</td><td>5.5</td><td>99.6</td><td>12.8</td><td>10.02</td><td>25.3</td><td>98.0</td><td>0.9</td><td>16.0</td><td>-1.40</td><td>2.03</td><td>4.33</td><td>1.59</td></tr>
+ <tr><td style="padding: 0px;"><td colspan="27" style="display:none;padding:0px;" id="merge-td-0"><pre> SPACE_GROUP_NUMBER=   89
+ UNIT_CELL_CONSTANTS=    79.58    79.58    37.33  90.000  90.000  90.000
+
+ SUBSET OF INTENSITY DATA WITH SIGNAL/NOISE >= -3.0 AS FUNCTION OF RESOLUTION
+ RESOLUTION     NUMBER OF REFLECTIONS    COMPLETENESS R-FACTOR  R-FACTOR COMPARED I/SIGMA   R-meas  CC(1/2)  Anomal  SigAno   Nano
+   LIMIT     OBSERVED  UNIQUE  POSSIBLE     OF DATA   observed  expected                                      Corr
+
+     5.60        9239     719       722       99.6%      24.3%     24.2%     9237   10.02     25.3%    98.0*    16    0.936     258
+     3.96       17170    1293      1293      100.0%      27.4%     24.3%    17170   10.27     28.5%    96.9*    18*   1.050     543
+     3.23       21787    1686      1686      100.0%      33.0%     25.5%    21785    9.22     34.4%    94.8*    17*   1.189     739
+     2.80       25824    1979      1979      100.0%      35.7%     29.6%    25823    7.67     37.1%    94.4*    13*   1.012     885
+     2.50       28503    2229      2229      100.0%      41.7%     36.8%    28502    6.30     43.4%    91.3*     1    0.880    1015
+     2.29       32884    2503      2504      100.0%      47.5%     45.7%    32884    5.48     49.4%    91.2*     7    0.820    1146
+     2.12       34292    2683      2683      100.0%      55.1%     59.3%    34288    4.61     57.4%    87.6*     9    0.784    1237
+     1.98       36088    2890      2893       99.9%      66.5%     85.9%    36086    3.75     69.3%    84.3*     2    0.672    1343
+     1.87       39630    3086      3087      100.0%      91.0%    141.7%    39626    2.98     94.8%    79.5*     7    0.612    1438
+     1.77       41253    3269      3270      100.0%     124.1%    222.4%    41251    2.31    129.4%    69.7*     0    0.559    1529
+     1.69       42777    3431      3431      100.0%     179.1%    351.8%    42777    1.81    186.8%    64.0*    -1    0.501    1609
+     1.62       45070    3595      3595      100.0%     239.8%    499.8%    45068    1.44    250.2%    52.4*     0    0.491    1694
+     1.55       39595    3725      3725      100.0%     335.7%    726.9%    39590    0.98    353.2%    25.2*     0    0.462    1753
+     1.50       28965    3858      3864       99.8%     404.0%    882.7%    28921    0.55    435.2%     6.9      0    0.418    1783
+     1.45       21592    3991      4046       98.6%     554.7%   1235.0%    21414    0.31    616.1%     1.5      3    0.406    1707
+     1.40       15994    3990      4164       95.8%     545.5%   1254.1%    15550    0.17    626.7%    -0.6      2    0.391    1437
+     1.36       11131    3869      4324       89.5%     390.1%    851.2%    10216    0.11    467.4%     0.5     -1    0.397     992
+     1.32        6844    3271      4432       73.8%     334.6%    739.5%     5532    0.06    422.9%     0.2     -5    0.395     476
+     1.28        3171    2124      4527       46.9%     357.4%    800.7%     1800    0.08    475.1%    13.6*    -3    0.400      89
+     1.25         617     546      4669       11.7%     265.0%    696.3%      134    0.08    359.6%     5.5    -86    0.074       2
+    total      502426   54737     63123       86.7%      87.8%    149.0%   497654    2.54     94.7%    25.3*     7    0.604   21675
+
+Anisotropy:
+direction B_eigen Resol(CC1/2=0.5)
+       c*   -1.23 2.03
+     a*b*   -1.50 4.33
+</pre></td></tr>
+</table>
+<a href="#" onClick="show_or_hide('merge-td-mark-0', 'merge-td-0', 0);return false;">Expand all</a> / <a href="#" onClick="show_or_hide('merge-td-mark-0', 'merge-td-0', 1);return false;">Collapse all</a>
+
+<form name="merge_plot_selector">
+<table>
+<tr>
+<td>
+<div id="chartdiv_merge" style="width: 800px; height: 600px;"></div>
+<script>
+ var chart_merge = AmCharts.makeChart("chartdiv_merge", {
+    "type": "xy",
+    "theme": "none",  
+    "legend": {
+        "useGraphSettings": true,
+    },
+    "dataProvider": [{"cls":"all_data","ClH":0.00,"LCV":2.9,"aLCV":3.2,"ds.all":88,"ds.used":76,"Cmpl":86.7,"Redun":9.2,"I/sigI":2.54,"Rmeas":94.7,"CC1/2":25.3,"Cmpl.ou":11.7,"Red.ou":1.1,"I/sig.ou":0.08,"Rmeas.ou":359.6,"CC1/2.ou":5.5,"Cmpl.in":99.6,"Red.in":12.8,"I/sig.in":10.02,"Rmeas.in":25.3,"CC1/2.in":98.0,"SigAno.in":0.9,"CCano.in":16.0,"WilsonB":-1.40,"aniso.best":2.03,"aniso.worst":4.33,"dmin.est":1.59}],
+    "valueAxes": [{
+        "position":"bottom",
+        "axisAlpha": 0,
+        "dashLength": 1,
+        "title": "Redun"
+    }, { 
+        "axisAlpha": 0,
+        "dashLength": 1,
+        "position": "left",
+        "title": "CC1/2"
+    }],
+    "graphs": [{
+        "balloonText": "[[description]]: x=[[x]], y=[[y]]",
+        "bullet": "round",
+        "bulletSize": 8,
+        "lineAlpha": 0,
+        "xField": "Redun",
+        "yField": "CC1/2",
+        "descriptionField": "cls",
+        "title": "Clusters",
+        "hidden": false,
+        "lineColor": "#FF6600",
+        "fillAlphas": 0
+    }],
+    "chartScrollbar": {},
+});
+</script>
+</td>
+<td>X-axis:<br \>
+<select name="xaxis" style="width: 150px" size="24" onChange="chart_merge.graphs[0].xField=this.value; chart_merge.valueAxes[0].title=this.value; chart_merge.validateNow(); chart_merge.validateData();">
+<option value="ClH">ClH</option>
+<option value="LCV">LCV</option>
+<option value="aLCV">aLCV</option>
+<option value="ds.all">ds.all</option>
+<option value="ds.used">ds.used</option>
+<option value="Cmpl">Cmpl</option>
+<option value="Redun" selected="selected">Redun</option>
+<option value="I/sigI">I/sigI</option>
+<option value="Rmeas">Rmeas</option>
+<option value="CC1/2">CC1/2</option>
+<option value="Cmpl.ou">Cmpl.ou</option>
+<option value="Red.ou">Red.ou</option>
+<option value="I/sig.ou">I/sig.ou</option>
+<option value="Rmeas.ou">Rmeas.ou</option>
+<option value="CC1/2.ou">CC1/2.ou</option>
+<option value="Cmpl.in">Cmpl.in</option>
+<option value="Red.in">Red.in</option>
+<option value="I/sig.in">I/sig.in</option>
+<option value="Rmeas.in">Rmeas.in</option>
+<option value="CC1/2.in">CC1/2.in</option>
+<option value="SigAno.in">SigAno.in</option>
+<option value="CCano.in">CCano.in</option>
+<option value="WilsonB">WilsonB</option>
+<option value="aniso.best">aniso.best</option>
+<option value="aniso.worst">aniso.worst</option>
+<option value="dmin.est">dmin.est</option>
+</select>
+</td>
+<td>Y-axis:<br \>
+<select name="xaxis" style="width: 150px" size="24" onChange="chart_merge.graphs[0].yField=this.value; chart_merge.valueAxes[1].title=this.value; chart_merge.validateNow(); chart_merge.validateData();">
+<option value="ClH">ClH</option>
+<option value="LCV">LCV</option>
+<option value="aLCV">aLCV</option>
+<option value="ds.all">ds.all</option>
+<option value="ds.used">ds.used</option>
+<option value="Cmpl">Cmpl</option>
+<option value="Redun">Redun</option>
+<option value="I/sigI">I/sigI</option>
+<option value="Rmeas">Rmeas</option>
+<option value="CC1/2" selected="selected">CC1/2</option>
+<option value="Cmpl.ou">Cmpl.ou</option>
+<option value="Red.ou">Red.ou</option>
+<option value="I/sig.ou">I/sig.ou</option>
+<option value="Rmeas.ou">Rmeas.ou</option>
+<option value="CC1/2.ou">CC1/2.ou</option>
+<option value="Cmpl.in">Cmpl.in</option>
+<option value="Red.in">Red.in</option>
+<option value="I/sig.in">I/sig.in</option>
+<option value="Rmeas.in">Rmeas.in</option>
+<option value="CC1/2.in">CC1/2.in</option>
+<option value="SigAno.in">SigAno.in</option>
+<option value="CCano.in">CCano.in</option>
+<option value="WilsonB">WilsonB</option>
+<option value="aniso.best">aniso.best</option>
+<option value="aniso.worst">aniso.worst</option>
+<option value="dmin.est">dmin.est</option>
+</select>
+</td>
+</tr>
+</table>
+</form>
+
+</body></html>
